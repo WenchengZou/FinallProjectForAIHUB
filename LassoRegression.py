@@ -1,6 +1,3 @@
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import KFold
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import train_test_split
@@ -24,10 +21,10 @@ def plot_coefficients(est, alpha):
     plt.savefig('LassoResult.jpg')
 
 
-df=pd.read_csv('../Dataset/us_daily.csv')
+df=pd.read_csv('../Dataset/us_daily_enhanced.csv')
 #修改时间轴
 df=df.loc[(df['date']>=20200315) & (df['date']<=20200420)]
-usedcolumns=['pending','hospitalizedIncrease','negativeIncrease']
+usedcolumns=['date','hospitalizedIncrease','onVentilatorIncrease','negativeIncrease']
 amount=1
 
 
@@ -73,4 +70,5 @@ alphasvalue=best_alpha
 
 plot_coefficients(model,alphasvalue)
 print("The column:[{}]'s mse is {}".format(usedcolumns,mset))
+
 
