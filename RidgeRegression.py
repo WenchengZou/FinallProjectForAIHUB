@@ -11,7 +11,7 @@ import datetime
 import matplotlib.dates as mdates
 from pandas.plotting import register_matplotlib_converters
 from sklearn.linear_model import Ridge
-#pending,hospitalizedCurrently,inIcuCurrently,onVentilatorCurrently
+#date,hospitalizedIncrease,onVentilatorIncrease,negativeIncrease
 
 
 def plot_coefficients(est, alpha):
