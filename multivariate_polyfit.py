@@ -27,7 +27,6 @@ df_x = pd.concat([df_x1,df_x2],axis=1)
 df_y = pd.DataFrame(data=df_y, columns=['positiveIncrease'])
 print(df_x.shape)
 
-#split the dataset
 i_train, i_test = train_test_split(range((df_x.values).shape[0]),train_size=0.8)
 
 X_train1 = df_x.negativeIncrease[i_train]
@@ -68,7 +67,7 @@ for d in range(1,11):
 #Preform the actual regression
     clf.fit(X_train_poly, y_train)
     
-    scores = cross_val_score(clf, X_train_poly, y_train, cv=5)
+    scores = cross_val_score(clf, X_train_poly, y_train, cv=5, scoring = 'neg_mean_squared_error')
     #print(clf.predict(X_train_poly).shape)
     #print(y_train.shape)
     score_all.append(scores.mean())
@@ -76,3 +75,6 @@ for d in range(1,11):
     print("Prediction in degree = {} ".format(d),clf.predict(X_test_poly))
     print("====================================")
 print("Score = ",score_all)
+
+bestd = np.argmax(score_all)
+print("The best degress is ",bestd)
