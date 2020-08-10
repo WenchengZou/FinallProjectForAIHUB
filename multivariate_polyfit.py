@@ -1,80 +1,133 @@
-#Import libs
 import pandas as pd
+import numpy as np
+from sklearn.model_selection import KFold
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error as mse
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_val_score
+import datetime
+import matplotlib.dates as mdates
+from pandas.plotting import register_matplotlib_converters
+from sklearn.linear_model import Lasso
+from sklearn.metrics import r2_score
 
-%matplotlib inline
+def plot_coefficients(est, alpha):
+    coef = est.coef_.ravel()
+    plt.semilogy(np.abs(coef), marker='o', label="alpha = %s" % str(alpha))
+    plt.ylim(((1e-20), 1e15))
+    plt.ylabel('abs(coefficient)')
+    plt.xlabel('coefficients')
+    plt.legend(loc='upper left')
+    plt.savefig('RidgeResult.jpg')
 
-import numpy as np
-import scipy as sp
 
-import matplotlib.pyplot as plt
-from numpy import linalg, zeros, ones, hstack, asarray
-import itertools
+def time_windows(window_length, data_namex, data_namey, df, alpha):
+    finallx = []
+    finaly = []
+    # this loop is for the entire dataframe:
+    # the last index for the window shall be the length of the entire dataframe minus the size of the windows plus 1
+    for index in range(len(df) - window_length):
+        # containing  each row for the finall result
+        temp = []
+        # this loop is to calculate the result for the entire column_name
+        for index_dn in data_namex:
+            sum = 0
+            # the result of each column shall be a number which we call sum
+            # and now we slide the window
+            for windex in range(window_length):
+                sum += (df[index_dn].values)[index + windex] * (alpha ** windex)
+            temp.append(sum)
+        finallx.append(temp)
 
-#Read data from csv file
-df = pd.read_csv("/Users/waldo/AI HUB/Project/FinallProject/Dataset/us_daily.csv")
-
-#Extract the features we need and concatenate features into one dataframe
-df_x1 = df['negativeIncrease']
-df_x2 = df['hospitalizedIncrease']
-df_y = df['positiveIncrease']
-df_x = pd.concat([df_x1,df_x2],axis=1)
-
-df_y = pd.DataFrame(data=df_y, columns=['positiveIncrease'])
-print(df_x.shape)
-
-i_train, i_test = train_test_split(range((df_x.values).shape[0]),train_size=0.8)
-
-X_train1 = df_x.negativeIncrease[i_train]
-X_train2 = df_x.hospitalizedIncrease[i_train]
-X_train = pd.concat([X_train1,X_train2],axis=1).values
-print(X_train.shape)
-
-y_train = df_y.positiveIncrease[i_train]
-print(y_train.shape)
-
-X_test1 = df_x.negativeIncrease[i_test]
-X_test2 = df_x.hospitalizedIncrease[i_test]
-X_test = pd.concat([X_test1,X_test2],axis=1).values
-print(X_test.shape)
-
-y_test = df_y.positiveIncrease[i_test]
-print(y_test.shape)
-
-#Initialize a list for R-square score
-score_all = []
-
-for d in range(1,11):
-#Generate polynomial features
-    poly = PolynomialFeatures(degree=d)
-
-#Transform the x data for proper fitting (for single variable type it returns,[1,x,x**2])
-    X_train_poly = poly.fit_transform(X_train)
-
-#Transform the prediction to fit the model type
-    X_test_poly = poly.fit_transform(X_test)
-
-#Here we can remove polynomial orders we don't want. For instance I'm removing the `x` component
-    X_train_poly = np.delete(X_train_poly,(1),axis=1)
-    X_test_poly = np.delete(X_test_poly,(1),axis=1)
-
-#Generate the regression object
-    clf = LinearRegression()
-#Preform the actual regression
-    clf.fit(X_train_poly, y_train)
+    for indexy in range(window_length, len(df)):
+        finaly.append((df[data_namey].values)[indexy])
+    return np.array(finallx), np.array(finaly)
     
-    scores = cross_val_score(clf, X_train_poly, y_train, cv=5, scoring = 'neg_mean_squared_error')
-    #print(clf.predict(X_train_poly).shape)
-    #print(y_train.shape)
-    score_all.append(scores.mean())
+    
+df = pd.read_csv('../Dataset/us_daily_enhanced.csv')
+df = df.loc[0:128]
+usedcolumns=['datenum','positiveIncrease', 'hospitalizedIncrease','deathIncrease']
+predicts=['positiveIncrease']
+R2=[]
+mseg=[]
+models=[]
+test_set=[]
+best_d=[]
 
-    print("Prediction in degree = {} ".format(d),clf.predict(X_test_poly))
-    print("====================================")
-print("Score = ",score_all)
+for x in np.linspace(1,3,20):
+    for y in range(1,10):
+        resultx, resulty = time_windows(y, usedcolumns, predicts, df, x)
+        ds=[1,2,3]
+        xtrain,xtest,ytrain,ytest=train_test_split(resultx,resulty,train_size=0.9,random_state=22)
+        xtrain=np.reshape(xtrain,[-1,len(usedcolumns)])
+        xtest=np.reshape(xtest,[-1,len(usedcolumns)])
+        general_error=[]
+        for i,d in enumerate(ds):
+            mses=[]
+            #do cross validation to find the best alpha
+            for trains,valids in KFold(4,shuffle=True).split(range(xtrain.shape[0])):
+                poly = PolynomialFeatures(degree=d)
+                X_train_poly = poly.fit_transform(xtrain[trains])
+                X_valid_poly = poly.fit_transform(xtrain[valids])
+                clf = LinearRegression()
+                clf.fit(X_train_poly, ytrain[trains])
+                y_pred=clf.predict(X_valid_poly)
+                mses.append(mse(y_pred,ytrain[valids]))
+            #??
+            general_error.append(np.mean(mses))
+            #using the entire training dataset to fit the Lasso model with alpha x
+        indexs2=np.argmin(general_error)
+        #mset.append(general_error[int(indexs2)])
+        best_dnum=ds[int(indexs2)]
+        poly = PolynomialFeatures(degree=best_dnum)
+        X_train_poly = poly.fit_transform(xtrain)
+        X_test_poly = poly.fit_transform(xtest)
+        clf2=LinearRegression()
+        clf2.fit(X_train_poly,ytrain)
+        y_pred2=clf2.predict(X_train_poly)
+        #record these data
 
-bestd = np.argmax(score_all)
-print("The best degress is ",bestd)
+        mseg.append(mse(y_pred2,ytrain))
+        R2.append(r2_score(y_pred2,ytrain))
+        models.append(clf2)
+        test_set.append([X_test_poly,ytest])
+        best_d.append(best_dnum)
+
+#plot the function between mse and R score:
+plt.scatter(mseg,R2,color='red')
+plt.xlabel('mse')
+plt.ylabel('R2')
+plt.savefig('temp.jpg')
+
+smallindex=np.argmax(R2)
+bestmodel=models[int(smallindex)]
+print(bestmodel.coef_)
+xtest=test_set[int(smallindex)][0]
+print(xtest.shape)
+#print(best_dnum)
+#poly = PolynomialFeatures(degree=best_dnum)
+#X_test_poly = poly.fit_transform(xtest)
+ytest=test_set[int(smallindex)][1]
+print(ytest.shape)
+y_predb=bestmodel.predict(xtest)
+bestd=best_d[int(smallindex)]
+#print(y_predb)
+
+#for i,j in enumerate(ytest):
+#    dict[y_predb[i]]=j[0]
+
+print("    预测值          实际值")
+for i in range(len(ytest)):
+    print("{} {}".format(y_predb[i],ytest[i]))
+
+mset=mse(y_predb,ytest)
+model=bestmodel
+dvalue=bestd
+scores=r2_score(y_predb,ytest)
+
+plot_coefficients(model,dvalue)
+print("The column:[{}]'s mse is {}".format(usedcolumns,mset))
+print("The score of this model is {}".format(scores))
+print("The best degree of this model is {}".format(bestd))
