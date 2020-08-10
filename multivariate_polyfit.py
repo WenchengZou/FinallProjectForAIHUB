@@ -95,11 +95,6 @@ for x in np.linspace(1,3,20):
         test_set.append([X_test_poly,ytest])
         best_d.append(best_dnum)
 
-#plot the function between mse and R score:
-plt.scatter(mseg,R2,color='red')
-plt.xlabel('mse')
-plt.ylabel('R2')
-plt.savefig('temp.jpg')
 
 smallindex=np.argmax(R2)
 bestmodel=models[int(smallindex)]
