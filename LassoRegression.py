@@ -10,7 +10,7 @@ from sklearn.metrics import mean_squared_error as mse
 import datetime
 import matplotlib.dates as mdates
 from pandas.plotting import register_matplotlib_converters
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Lasso
 from sklearn.metrics import r2_score
 #pending,hospitalizedCurrently,inIcuCurrently,onVentilatorCurrently
 
@@ -69,7 +69,7 @@ for x in np.linspace(1,3,20):
             mses=[]
             #do cross validation to find the best alpha
             for trains,valids in KFold(4,shuffle=True).split(range(xtrain.shape[0])):
-                lreg=Ridge(alpha=alpha,normalize=True)
+                lreg=Lasso(alpha=alpha,normalize=True)
                 lreg.fit(xtrain[trains],ytrain[trains])
                 y_pred=lreg.predict(xtrain[valids])
                 mses.append(mse(y_pred,ytrain[valids]))
@@ -79,7 +79,7 @@ for x in np.linspace(1,3,20):
         indexs2=np.argmin(general_error)
         #mset.append(general_error[int(indexs2)])
         best_alpha=alphas[int(indexs2)]
-        lreg2=Ridge(alpha=best_alpha, normalize=True)
+        lreg2=Lasso(alpha=best_alpha, normalize=True)
         lreg2.fit(xtrain,ytrain)
         y_pred2=lreg2.predict(xtrain)
         #record these data
@@ -90,8 +90,12 @@ for x in np.linspace(1,3,20):
         test_set.append([xtest,ytest])
         bests_alpha.append(best_alpha)
 
-#get the best R2 score for different window_set
-#and get the test_dataset, model with the best R2 score index.
+#plot the function between mse and R score:
+plt.scatter(mseg,R2,color='red')
+plt.xlabel('mse')
+plt.ylabel('R2')
+plt.savefig('temp.jpg')
+
 smallindex=np.argmax(R2)
 bestmodel=models[int(smallindex)]
 xtest=test_set[int(smallindex)][0]
@@ -99,10 +103,9 @@ ytest=test_set[int(smallindex)][1]
 y_predb=bestmodel.predict(xtest)
 besta=bests_alpha[int(smallindex)]
 
-#output information
 dict={}
 for i,j in enumerate(ytest):
-    dict[y_predb[i][0]]=j[0]
+    dict[y_predb[i]]=j[0]
 
 print("预测值\t实际值")
 for k,v in dict.items():
