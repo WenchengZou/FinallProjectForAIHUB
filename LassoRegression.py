@@ -12,7 +12,9 @@ import matplotlib.dates as mdates
 from pandas.plotting import register_matplotlib_converters
 from sklearn.linear_model import Lasso
 from sklearn.metrics import r2_score
-#pending,hospitalizedCurrently,inIcuCurrently,onVentilatorCurrently
+import warnings
+
+warnings.filterwarnings('ignore')
 
 
 def plot_coefficients(est, alpha):
@@ -22,7 +24,8 @@ def plot_coefficients(est, alpha):
     plt.ylabel('abs(coefficient)')
     plt.xlabel('coefficients')
     plt.legend(loc='upper left')
-    plt.savefig('RidgeResult.jpg')
+    plt.savefig('LassoResult.jpg')
+
 
 
 def time_windows(window_length, data_namex, data_namey, df, alpha):
@@ -42,14 +45,16 @@ def time_windows(window_length, data_namex, data_namey, df, alpha):
                 sum += (df[index_dn].values)[index + windex] * (alpha ** windex)
             temp.append(sum)
         finallx.append(temp)
-
     for indexy in range(window_length, len(df)):
         finaly.append((df[data_namey].values)[indexy])
     return np.array(finallx), np.array(finaly)
 
 
-df = pd.read_csv('../Dataset/us_daily_enhanced.csv')
-df = df.loc[0:127]
+df = pd.read_csv('../Dataset/us_daily_v2.csv')
+#three period which is 20200315 to 20200415, 20200415 to 20200715 and 20200715 to 20200809
+#is equivalent to the index [114:145], [23:114], and [0:23]
+#change the index for the certain period you want to train
+df = df.loc[0:23]
 usedcolumns=['datenum','positiveIncrease', 'hospitalizedIncrease','deathIncrease']
 predicts=['positiveIncrease']
 R2=[]
@@ -73,28 +78,21 @@ for x in np.linspace(1,3,20):
                 lreg.fit(xtrain[trains],ytrain[trains])
                 y_pred=lreg.predict(xtrain[valids])
                 mses.append(mse(y_pred,ytrain[valids]))
-            #??
             general_error.append(np.mean(mses))
             #using the entire training dataset to fit the Lasso model with alpha x
         indexs2=np.argmin(general_error)
-        #mset.append(general_error[int(indexs2)])
         best_alpha=alphas[int(indexs2)]
         lreg2=Lasso(alpha=best_alpha, normalize=True)
         lreg2.fit(xtrain,ytrain)
         y_pred2=lreg2.predict(xtrain)
+        
         #record these data
-
         mseg.append(mse(y_pred2,ytrain))
         R2.append(r2_score(y_pred2,ytrain))
         models.append(lreg2)
         test_set.append([xtest,ytest])
         bests_alpha.append(best_alpha)
 
-#plot the function between mse and R score:
-plt.scatter(mseg,R2,color='red')
-plt.xlabel('mse')
-plt.ylabel('R2')
-plt.savefig('temp.jpg')
 
 smallindex=np.argmax(R2)
 bestmodel=models[int(smallindex)]
@@ -103,13 +101,35 @@ ytest=test_set[int(smallindex)][1]
 y_predb=bestmodel.predict(xtest)
 besta=bests_alpha[int(smallindex)]
 
+
+#draw the result graph
+datet=[]
+for i,j in enumerate(ytest):
+    temp=df.loc[df['positiveIncrease']==j[0]]['date'].values
+    datet.append(temp)
+register_matplotlib_converters()
+plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
+#if you choose a period you can change the interval to make the graph more tidy
+plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=5))
+times=[]
+for i in datet:
+   times.append(pd.to_datetime(str(datetime.datetime(int(str(i[0])[:4]), int(str(i[0])[4:6]), int(str(i[0])[6:])))))
+plt.title('The Test Result')
+plt.scatter(times,y_predb,color='red',label='prediction')
+plt.scatter(times,ytest,color='blue',label='reality')
+plt.xlabel('date')
+plt.ylabel('positiveIncrease')
+plt.legend()
+plt.savefig('LassoTestResult.jpg')
+
+
 dict={}
 for i,j in enumerate(ytest):
-    dict[y_predb[i]]=j[0]
+    dict[y_predb[i]]=[j[0],df.loc[df['positiveIncrease']==j[0]]['date'].values]
 
-print("预测值\t实际值")
+print("prediction\treality\tdate")
 for k,v in dict.items():
-    print("{} {}".format(k,v))
+    print("{} {} {}".format(k,v[0],v[1][0]))
 
 mset=mse(y_predb,ytest)
 model=bestmodel
@@ -119,4 +139,3 @@ scores=r2_score(y_predb,ytest)
 plot_coefficients(model,alphasvalue)
 print("The column:[{}]'s mse is {}".format(usedcolumns,mset))
 print("The score of this model is {}".format(scores))
-

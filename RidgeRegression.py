@@ -12,7 +12,6 @@ import matplotlib.dates as mdates
 from pandas.plotting import register_matplotlib_converters
 from sklearn.linear_model import Ridge
 from sklearn.metrics import r2_score
-#pending,hospitalizedCurrently,inIcuCurrently,onVentilatorCurrently
 
 
 def plot_coefficients(est, alpha):
@@ -48,8 +47,8 @@ def time_windows(window_length, data_namex, data_namey, df, alpha):
     return np.array(finallx), np.array(finaly)
 
 
-df = pd.read_csv('../Dataset/us_daily_enhanced.csv')
-df = df.loc[0:127]
+df = pd.read_csv('../Dataset/us_daily_v2.csv')
+df = df.loc[0:23]
 usedcolumns=['datenum','positiveIncrease', 'hospitalizedIncrease','deathIncrease']
 predicts=['positiveIncrease']
 R2=[]
@@ -73,17 +72,15 @@ for x in np.linspace(1,3,20):
                 lreg.fit(xtrain[trains],ytrain[trains])
                 y_pred=lreg.predict(xtrain[valids])
                 mses.append(mse(y_pred,ytrain[valids]))
-            #??
             general_error.append(np.mean(mses))
             #using the entire training dataset to fit the Lasso model with alpha x
         indexs2=np.argmin(general_error)
-        #mset.append(general_error[int(indexs2)])
         best_alpha=alphas[int(indexs2)]
         lreg2=Ridge(alpha=best_alpha, normalize=True)
         lreg2.fit(xtrain,ytrain)
         y_pred2=lreg2.predict(xtrain)
+        
         #record these data
-
         mseg.append(mse(y_pred2,ytrain))
         R2.append(r2_score(y_pred2,ytrain))
         models.append(lreg2)
@@ -98,13 +95,34 @@ ytest=test_set[int(smallindex)][1]
 y_predb=bestmodel.predict(xtest)
 besta=bests_alpha[int(smallindex)]
 
+
+#draw the result graph
+datet=[]
+for i,j in enumerate(ytest):
+    temp=df.loc[df['positiveIncrease']==j[0]]['date'].values
+    datet.append(temp)
+register_matplotlib_converters()
+plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
+plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=5))
+times=[]
+for i in datet:
+   times.append(pd.to_datetime(str(datetime.datetime(int(str(i[0])[:4]), int(str(i[0])[4:6]), int(str(i[0])[6:])))))
+plt.title('The Test Result')
+plt.scatter(times,y_predb,color='red',label='prediction')
+plt.scatter(times,ytest,color='blue',label='reality')
+plt.xlabel('date')
+plt.ylabel('positiveIncrease')
+plt.legend()
+plt.savefig('RidgeTestResult.jpg')
+
+#output the result graph
 dict={}
 for i,j in enumerate(ytest):
-    dict[y_predb[i][0]]=j[0]
+    dict[y_predb[i][0]]=[j[0],df.loc[df['positiveIncrease']==j[0]]['date'].values]
 
-print("预测值\t实际值")
+print("prediction\treality\tdate")
 for k,v in dict.items():
-    print("{} {}".format(k,v))
+    print("{} {} {}".format(k,v[0],v[1][0]))
 
 mset=mse(y_predb,ytest)
 model=bestmodel
