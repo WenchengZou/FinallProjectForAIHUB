@@ -14,14 +14,14 @@ from sklearn.linear_model import Lasso
 from sklearn.metrics import r2_score
 
 
-def plot_coefficients(est, alpha):
+def plot_coefficients(est, alpha,axt):
     coef = est.coef_.ravel()
-    plt.semilogy(np.abs(coef), marker='o', label="alpha = %s" % str(alpha))
-    plt.ylim(((1e-20), 1e15))
-    plt.ylabel('abs(coefficient)')
-    plt.xlabel('coefficients')
-    plt.legend(loc='upper left')
-    plt.savefig('PolyResult.jpg')
+    axt.semilogy(np.abs(coef), marker='o', label="alpha = %s" % str(alpha))
+    axt.set_ylim(((1e-20), 1e15))
+    axt.set_ylabel('abs(coefficient)')
+    axt.set_xlabel('coefficients')
+    axt.legend(loc='upper left')
+    #plt.savefig('PolyResult.jpg')
 
 
 def decay_list(start,end,num):
@@ -41,6 +41,7 @@ def decay_list(start,end,num):
         temp.reverse()
         list.append(temp)
     return list
+#print(decay_list(1,3,21))
 
 def time_windows(window_length, data_namex, data_namey, df, alpha):
     finallx = []
@@ -85,7 +86,6 @@ for x in decay_list(2.5,3.5,5):
             mses = []
             # do cross validation to find the best alpha
             for trains, valids in KFold(4, shuffle=True).split(range(xtrain.shape[0])):
-            # apply polynomial features to predictors
                 poly = PolynomialFeatures(degree=d)
                 X_train_poly = poly.fit_transform(xtrain[trains])
                 X_valid_poly = poly.fit_transform(xtrain[valids])
@@ -93,6 +93,7 @@ for x in decay_list(2.5,3.5,5):
                 clf.fit(X_train_poly, ytrain[trains])
                 y_pred = clf.predict(X_valid_poly)
                 mses.append(mse(y_pred, ytrain[valids]))
+            # ??
             general_error.append(np.mean(mses))
             # using the entire training dataset to fit the Lasso model with alpha x
         indexs2 = np.argmin(general_error)
@@ -129,31 +130,31 @@ ytest = test_set[int(smallindex)][1]
 y_predb = bestmodel.predict(xtest)
 bestd = best_d[int(smallindex)]
 
-#draw the result graph
+
+fig,ax=plt.subplots(1,2,figsize=(18,6))
 datet=[]
 for i,j in enumerate(ytest):
     temp=df.loc[df['positiveIncrease']==j[0]]['date'].values
     datet.append(temp)
 register_matplotlib_converters()
 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
-#if you choose a period you can change the interval to make the graph more tidy
 plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=5))
 times=[]
 for i in datet:
    times.append(pd.to_datetime(str(datetime.datetime(int(str(i[0])[:4]), int(str(i[0])[4:6]), int(str(i[0])[6:])))))
-plt.title('The Test Result')
-plt.scatter(times,y_predb,color='red',label='prediction')
-plt.scatter(times,ytest,color='blue',label='reality')
-plt.xlabel('date')
-plt.ylabel('positiveIncrease')
-plt.legend()
-plt.savefig('PolyTestResult.jpg')
+ax[1].set_title('The Test Result')
+ax[1].scatter(times,y_predb,color='red',label='prediction')
+ax[1].scatter(times,ytest,color='blue',label='reality')
+ax[1].set_xlabel('date')
+ax[1].set_ylabel('positiveIncrease')
+ax[1].legend()
+#plt.savefig('PolyTestResult.jpg')
 
 dict={}
 for i,j in enumerate(ytest):
     dict[y_predb[i][0]]=[j[0],df.loc[df['positiveIncrease']==j[0]]['date'].values]
 
-print("Prediction\treality\tdate")
+print("预测值\t实际值\t日期")
 for k,v in dict.items():
     print("{} {} {}".format(k,v[0],v[1][0]))
 
@@ -162,7 +163,8 @@ model = bestmodel
 dvalue = bestd
 scores = r2_score(y_predb, ytest)
 
-plot_coefficients(model, dvalue)
+plot_coefficients(model, dvalue,ax[0])
+fig.savefig('PolyResult.jpg')
 print("The column:[{}]'s mse is {}".format(usedcolumns, mset))
 print("The score of this model is {}".format(scores))
 print("The best degree of this model is {}".format(bestd))

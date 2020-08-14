@@ -12,16 +12,17 @@ import matplotlib.dates as mdates
 from pandas.plotting import register_matplotlib_converters
 from sklearn.linear_model import Ridge
 from sklearn.metrics import r2_score
+#pending,hospitalizedCurrently,inIcuCurrently,onVentilatorCurrently
 
 
-def plot_coefficients(est, alpha):
+def plot_coefficients(est, alpha,axt):
     coef = est.coef_.ravel()
-    plt.semilogy(np.abs(coef), marker='o', label="alpha = %s" % str(alpha))
-    plt.ylim(((1e-20), 1e15))
-    plt.ylabel('abs(coefficient)')
-    plt.xlabel('coefficients')
-    plt.legend(loc='upper left')
-    plt.savefig('RidgeResult.jpg')
+    axt.semilogy(np.abs(coef), marker='o', label="alpha = %s" % str(alpha))
+    axt.set_ylim(((1e-20), 1e15))
+    axt.set_ylabel('abs(coefficient)')
+    axt.set_xlabel('coefficients')
+    axt.legend(loc='upper left')
+    #axt.savefig('LassoResult.jpg')
 
 
 def time_windows(window_length, data_namex, data_namey, df, alpha):
@@ -72,15 +73,17 @@ for x in np.linspace(1,3,20):
                 lreg.fit(xtrain[trains],ytrain[trains])
                 y_pred=lreg.predict(xtrain[valids])
                 mses.append(mse(y_pred,ytrain[valids]))
+            #??
             general_error.append(np.mean(mses))
             #using the entire training dataset to fit the Lasso model with alpha x
         indexs2=np.argmin(general_error)
+        #mset.append(general_error[int(indexs2)])
         best_alpha=alphas[int(indexs2)]
         lreg2=Ridge(alpha=best_alpha, normalize=True)
         lreg2.fit(xtrain,ytrain)
         y_pred2=lreg2.predict(xtrain)
-        
         #record these data
+
         mseg.append(mse(y_pred2,ytrain))
         R2.append(r2_score(y_pred2,ytrain))
         models.append(lreg2)
@@ -97,6 +100,7 @@ besta=bests_alpha[int(smallindex)]
 
 
 #draw the result graph
+fig,ax=plt.subplots(1,2,figsize=(18,6))
 datet=[]
 for i,j in enumerate(ytest):
     temp=df.loc[df['positiveIncrease']==j[0]]['date'].values
@@ -107,20 +111,20 @@ plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=5))
 times=[]
 for i in datet:
    times.append(pd.to_datetime(str(datetime.datetime(int(str(i[0])[:4]), int(str(i[0])[4:6]), int(str(i[0])[6:])))))
-plt.title('The Test Result')
-plt.scatter(times,y_predb,color='red',label='prediction')
-plt.scatter(times,ytest,color='blue',label='reality')
-plt.xlabel('date')
-plt.ylabel('positiveIncrease')
-plt.legend()
-plt.savefig('RidgeTestResult.jpg')
+ax[1].set_title('The Test Result')
+ax[1].scatter(times,y_predb,color='red',label='prediction')
+ax[1].scatter(times,ytest,color='blue',label='reality')
+ax[1].set_xlabel('date')
+ax[1].set_ylabel('positiveIncrease')
+ax[1].legend()
+#plt.savefig('RidgeTestResult.jpg')
 
-#output the result graph
+
 dict={}
 for i,j in enumerate(ytest):
     dict[y_predb[i][0]]=[j[0],df.loc[df['positiveIncrease']==j[0]]['date'].values]
 
-print("prediction\treality\tdate")
+print("预测值\t实际值\t日期")
 for k,v in dict.items():
     print("{} {} {}".format(k,v[0],v[1][0]))
 
@@ -129,6 +133,7 @@ model=bestmodel
 alphasvalue=besta
 scores=r2_score(y_predb,ytest)
 
-plot_coefficients(model,alphasvalue)
+plot_coefficients(model,alphasvalue,ax[0])
+fig.savefig("RidgeResult.jpg")
 print("The column:[{}]'s mse is {}".format(usedcolumns,mset))
 print("The score of this model is {}".format(scores))
