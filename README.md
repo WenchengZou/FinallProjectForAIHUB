@@ -10,7 +10,10 @@ All the codes relate to data are saved in *"dataset"* folder.
 ### Regression Models
 All the codes relate to regression are saved in *"regression"* folder.
 To fit the daily increase positive cases number, we split the whole range during 15th Mar to 7th Aug in to 3 time spans. The first one ranges from 15th Mar to 15th Apr, the second ranges from 16th Apr to 15th Jul, and the third one ranges from 16th Jul yo 7th Aug. This spilt maximizes the peak feature of each span.
+
 Lasso Regression, Ridge Regression, Multivariate Polynomial Regression are used to fit data on spans aforementioned. We use MSE to select the best fit model for each span. In cosideration of the relativity of consecutive days, we design a **time window function** to load data in a specific range with different adaptive weights for each day in this range.This processing helps models to fit data better since in real world, data of several consecutive days are releated.
+
+We try to fit specific state data to find if selected states can generally represent the whole US epidemic trend with linear regression, and the result is amazing. Data of GA and MA can almost perfectly fit the whole US data.
 
 ### Nueral Network Models
 **Important**: Due to the deciciency of reliable data, NN models perform not very well. But we believe our models are potentialy promising.
