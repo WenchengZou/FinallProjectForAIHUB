@@ -1,7 +1,7 @@
 # Final Project For AIHUB (Magnificent G1)
 ## This project aims to make estimation about the COVID-19 situation in the US
 
-### Our Thoughts
+### Introduction
 Predicting the impact of the COVID-19, including daily increases, confirmed positives and etc. is critically significant on how to faithfully represents the real epidemic situation, and therefore, guiding us to handle with it.
 We implement several estimation approach to make "precise" (not always) predictions, including **Lasso Regression, Ridge Regression, Multivariate Polynomial Regression, FCNN (Fully-Connected Nueral Network) and LSTM**. Also, we build an **classification model based on twitter sentimenal analysis**, using overall percentage of different emotion types to predict a plausible  range of daily increase number. We also combine **SEIR model with the nueral network,** utilizing the NN to sovle ODE problem.
 
