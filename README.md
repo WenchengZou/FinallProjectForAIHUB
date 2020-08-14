@@ -1,11 +1,11 @@
-# FinallProjectForAIHUB
-## This project is to make estimation about the COVID-19 situation in the US
+# Final Project For AIHUB (Magnificent G1)
+## This project aims to make estimation about the COVID-19 situation in the US
 
 ### Our Thoughts
 Predicting the impact of the COVID-19, including daily increases, confirmed positives and etc. is critically significant on how to faithfully represents the real epidemic situation, and therefore, guiding us to handle with it.
 We implement several estimation approach to make "precise" (not always) predictions, including **Lasso Regression, Ridge Regression, Multivariate Polynomial Regression, FCNN (Fully-Connected Nueral Network) and LSTM**. Also, we build an **classification model based on twitter sentimenal analysis**, using overall percentage of different emotion types to predict a plausible  range of daily increase number. We also combine **SEIR model with the nueral network,** utilizing the NN to sovle ODE problem.
 
-All the codes relate to data are saved in *"dataset"* folder.
+All the codes relate to data are saved in *"dataset"* folder. 
 
 ### Regression Models
 All the codes relate to regression are saved in *"regression"* folder.
@@ -24,4 +24,4 @@ LSTM **was** a "state-of-the-art" model to predict time series data. The most im
 We done something really fun in our project, which is the classification model based on twitter sentimenal analysis. We collect some twitters in the US from 10th Jul to 7th Aug and analyze those twitters' emotional attitude towards COVID-19 (positive, negative or nuetral). And the responsible variable is daily increase positive cases. As we input the ratio of those three attitudes on a specific day, the model can predict the increase cases of this day. 
 (55000-  -->1    55000-60000  -->2    60000-65000  -->3   65000-70000  -->4    70000+  -->5)
 
-The most creative and hardcore of our project is SEIR model with the nueral network. Considering the fundamental goal of ODE is to calculate equations like xxxxx = 0, it is perfect to work with neural network whose goal is to minimize the loss to 0. We "transform" SEIR equations in to loss functions in a neural network, trying to fit the analytical solution of those equations.
+The most creative and hardcore portion of our project is SEIR model with the nueral network. Considering the fundamental goal of ODE is to calculate equations like xxxxx = 0, it is perfect to work with neural network whose goal is to minimize the loss to 0. We "transform" SEIR equations in to loss functions in a neural network, trying to fit the analytical solution of those equations.
