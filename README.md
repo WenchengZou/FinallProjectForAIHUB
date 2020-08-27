@@ -26,7 +26,7 @@ Lasso Regression, Ridge Regression, Multivariate Polynomial Regression are used 
 We try to fit specific state data to find if selected states can generally represent the whole US epidemic trend with linear regression, and the result is amazing. Data of GA and MA can almost perfectly fit the whole US data.
 
 ### Nueral Network Models
-**Important**: Due to the deciciency of reliable data, NN models perform not very well. But we believe our models are potentialy promising.
+**Important**: Due to the deficiency of reliable data, NN models perform not very well. But we believe our models are potentialy promising.
 
 All the codes relate to nueral netowk are saved in *"neural netowrk"* folder.
 
