@@ -28,10 +28,6 @@ We try to fit specific state data to find if selected states can generally repre
 ### Neural Network Models
 **Important**: Due to the deciciency of reliable data, NN models perform not very well. But we believe our models are potentialy promising.
 
-### Nueral Network Models
-**Important**: Due to the deficiency of reliable data, NN models perform not very well. But we believe our models are potentialy promising.
-
-
 All the codes relate to neural netowk are saved in *"neural netowrk"* folder.
 
 FCNN is the simplest NN model, we use it as a "hand-on experiment".
